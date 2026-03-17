@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Update Booking - Hotel Paradise</title>
+<link rel="stylesheet" href="style.css">
+<script src="script.js"></script>
+</head>
+
+<body>
+
+<header>
+<h1>Hotel Paradise</h1>
+<p>Luxury • Comfort • Experience</p>
+</header>
+
+<nav>
+<a href="index.html">Home</a>
+<a href="rooms.html">Rooms</a>
+<a href="services.html">Services</a>
+<a href="booking.html">Booking</a>
+<a href="cancel.html">Cancel</a>
+</nav>
+
+<section class="update-booking">
+
+<h2>Update Booking</h2>
+
+<div class="booking-box">
+
+<label>Name</label>
+<input type="text" id="searchName">
+
+<label>Booking ID</label>
+<input type="text" id="searchId">
+
+<button onclick="getBooking()">Get Booking</button>
+
+<hr>
+
+<label>Select Room</label>
+<select id="room">
+<option>Single Room</option>
+<option>Double Room</option>
+<option>Deluxe Room</option>
+<option>Family Room</option>
+<option>Executive Suite</option>
+<option>Presidential Suite</option>
+</select>
+
+<label>Payment Method</label>
+<select id="payment">
+<option>Cash</option>
+<option>Online Payment</option>
+</select>
+
+<button onclick="updateBooking()">Update Booking</button>
+
+</div>
+
+</section>
+
+</body>
+</html>
