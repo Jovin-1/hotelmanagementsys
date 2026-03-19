@@ -4,6 +4,60 @@
 <title>Rooms - Hotel Paradise</title>
 <link rel="stylesheet" href="/static/style.css">
 </head>
+<style>
+
+/* Overlay */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Popup Box */
+.popup {
+  background: #fff;
+  padding: 25px;
+  width: 400px;
+  border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+}
+
+/* Form Styling */
+.popup h2 {
+  margin-bottom: 15px;
+}
+
+.popup input, .popup select {
+  width: 100%;
+  padding: 8px;
+  margin: 8px 0;
+}
+
+.popup button {
+  margin-top: 10px;
+  padding: 10px;
+  width: 100%;
+  background: #007BFF;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.close-btn {
+  float: right;
+  cursor: pointer;
+  font-size: 18px;
+  color: red;
+}
+
+</style>
 
 <body>
 
@@ -95,6 +149,121 @@
 </div>
 
 </section>
+<div class="popup-overlay" id="popup">
+  <div class="popup">
+    <span class="close-btn" onclick="closePopup()">✖</span>
+<form id="bookingForm">
+
+  <input type="text" name="name" placeholder="Full Name" required>
+  <input type="text" name="verdoc" placeholder="Voter ID / Aadhar" required>
+  <input type="date" name="dob" required>
+
+  <select name="room_type" id="roomType">
+    <option>Single Room</option>
+    <option>Double Room</option>
+    <option>Deluxe Room</option>
+    <option>Family Room</option>
+    <option>Executive Suite</option>
+    <option>Presidential Suite</option>
+  </select>
+
+  <input type="date" name="checkin" required>
+  <input type="date" name="checkout" required>
+
+  <select name="payment_mode">
+    <option>Cash</option>
+    <option>UPI</option>
+    <option>Card</option>
+  </select>
+
+  <button type="submit">Confirm Booking</button>
+
+</form>
+
+  <div id="billDetails" style="display:none; padding:10px;">
+      <h2 id="billstats"></h2>
+      <h3 id="mess"></h3>
+      <pre id="billText" style="white-space: pre-wrap;"></pre>
+    </div>
+
+</div>
+</div>
+
+<script>
+// Open popup
+document.querySelectorAll(".room-card button").forEach((btn) => {
+  btn.addEventListener("click", function () {
+    document.getElementById("popup").style.display = "flex";
+
+    // Auto-fill room type based on clicked card
+    const roomName = this.parentElement.querySelector("h3").innerText;
+    document.getElementById("roomType").value = roomName;
+  });
+});
+
+// Close popup
+function closePopup() {
+  document.getElementById("popup").style.display = "none";
+  document.getElementById("bookingForm").style.display = "block";
+  document.getElementById("billDetails").style.display = "none";
+}
+
+document.getElementById("bookingForm").addEventListener("submit", async function(e) {
+  e.preventDefault(); // stop page reload
+
+  const formData = new FormData(this);
+
+  const data = Object.fromEntries(formData.entries());
+
+  console.log(data); // debug
+
+  const response = await fetch("/book", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(data)
+  });
+
+  const result = await response.json();
+  const billstat=result.message;
+
+  const bills = result.bill;
+document.getElementById("bookingForm").style.display = "none";
+if (!billstat.includes("Booking Successful")) {
+    document.getElementById("billstats").textContent = "Booking Failed";
+    document.getElementById("billText").style.display = "none";
+    document.getElementById("mess").textContent = billstat;
+     document.getElementById("mess").style.display = "block";
+    document.getElementById("billDetails").style.display = "block";
+}
+else{
+    document.getElementById("mess").style.display = "none";
+    document.getElementById("billstats").textContent = billstat;
+}
+
+  if (!bills) return;
+const billString = `
+Bill ID: ${bills.bill_id}
+Guest ID: ${bills.guest_id}
+Name: ${bills.gname}
+Reservation ID: ${bills.reservation_id}
+Room: ${bills.room_type}
+Room No: ${bills.room_no}
+Floor: ${bills.floor_no}
+Check-in: ${bills.check_in}
+Check-out: ${bills.check_out}
+Total: ₹${bills.total_bill}
+`;
+
+
+document.getElementById("billText").textContent = billString;
+ document.getElementById("billText").style.display = "block";
+document.getElementById("billDetails").style.display = "block";
+// Alert properly
+});
+
+</script>
 
 </body>
 </html>
