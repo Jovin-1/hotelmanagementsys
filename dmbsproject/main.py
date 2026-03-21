@@ -344,10 +344,19 @@ def update_booking(data: UpdateBooking):
             price = resv['total_bill'] / days_old
 
         # 3️⃣ Validate payment mode (Cash → UPI allowed)
-        if resv['payment_mode'].lower() == "cash" and data.payment_mode.upper() in ["UPI", "Cash"]:
-            payment_mode = data.payment_mode.upper() if data.payment_mode.upper() == "UPI" else "Cash"
-        elif resv['payment_mode'].lower() == "upi" and data.payment_mode.upper() == "UPI":
+        # Get current and new payment modes exactly as stored/selected
+        current_mode = resv['payment_mode']  # e.g., "Cash", "UPI", "Card"
+        new_mode = data.payment_mode          # exactly what user selected
+
+# Validate allowed changes
+        if current_mode == "Cash" and new_mode in ["UPI", "Card", "Cash"]:
+            payment_mode = new_mode
+        elif current_mode == "UPI" and new_mode == "UPI":
             payment_mode = "UPI"
+        elif current_mode == "Card" and new_mode == "Card":
+            payment_mode = "Card"
+        elif current_mode == new_mode:  # No change
+            payment_mode = current_mode
         else:
             return {"message": "Invalid payment mode change"}
 
@@ -376,6 +385,7 @@ def update_booking(data: UpdateBooking):
                 g.guest_id,
                 g.gname,
                 b.total_bill,
+                b.mode AS payment_mode,
                 r.reservation_id,
                 r.check_in,
                 r.check_out,
