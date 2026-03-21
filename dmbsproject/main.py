@@ -1,13 +1,27 @@
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 from db import get_db_connection
 from pydantic import BaseModel
 from datetime import date
+from pathlib import Path
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# app.mount("/static", StaticFiles(directory="static"), name="static")
+STATIC_DIR = Path("static")
 
+@app.get("/static/{file_path:path}")
+async def static_no_cache(file_path: str):
+    file_location = STATIC_DIR / file_path
+    if not file_location.exists():
+        return {"error": "File not found"}
+    return FileResponse(
+        file_location,
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+    )
 class Booking(BaseModel):
     name: str
     verdoc: str
@@ -15,6 +29,18 @@ class Booking(BaseModel):
     room_type: str
     checkin: date
     checkout: date
+    payment_mode: str
+
+class Cancel(BaseModel):
+    name: str
+    dob: date
+    reservation_id: int
+
+class UpdateBooking(BaseModel):
+    bookingId: str
+    room_type: str
+    check_in: str
+    check_out: str
     payment_mode: str
 
 @app.get("/")
@@ -28,6 +54,14 @@ def home():
 @app.get("/service")
 def home():
     return FileResponse("services.html")
+
+@app.get("/cancel-booking")
+def home():
+    return FileResponse("cancel.html")
+
+@app.get("/update-booking")
+def home():
+    return FileResponse("booking.html")
 
 @app.post("/book")
 def insertforbooking(data: Booking):
@@ -132,3 +166,73 @@ def insertforbooking(data: Booking):
         cursor.close()
         conn.close()
 
+@app.post("/cancel")
+def cancel_booking(data: Cancel):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True, buffered=True)
+
+    try:
+        # 1️⃣ Get ALL guest_ids
+        cursor.execute(
+            "SELECT guest_id FROM guest WHERE gname=%s AND dob=%s",
+            (data.name, data.dob)
+        )
+        guests = cursor.fetchall()
+
+        if not guests:
+            return {"message": "Guest not found"}
+
+        # Convert to list
+        guest_ids = [g["guest_id"] for g in guests]
+
+        # 2️⃣ Check reservation belongs to ANY of those guest_ids
+        format_strings = ','.join(['%s'] * len(guest_ids))
+
+        query = f"""
+            SELECT *
+            FROM reservation
+            WHERE reservation_id = %s
+            AND guest_id IN ({format_strings})
+        """
+
+        cursor.execute(query, [data.reservation_id] + guest_ids)
+        reservation = cursor.fetchone()
+
+        if not reservation:
+            return {"message": "Invalid reservation for this guest"}
+
+        # 3️⃣ Get billing
+        cursor.execute(
+            "SELECT total_bill, mode FROM billing WHERE reservation_id=%s",
+            (data.reservation_id,)
+        )
+        billing = cursor.fetchone()
+
+        if not billing:
+            return {"message": "Billing not found"}
+
+        # 4️⃣ Refund logic
+        if billing["mode"].lower() != "cash":
+            refund_msg = f"Rs {billing['total_bill']} will be refunded shortly."
+        else:
+            refund_msg = "No refund (Cash payment)."
+
+        # 5️⃣ Delete reservation
+        cursor.execute(
+            "DELETE FROM reservation WHERE reservation_id=%s",
+            (data.reservation_id,)
+        )
+
+        return {
+            "message": "Booking Cancelled Successfully",
+            "refund": refund_msg
+        }
+
+    except Exception as e:
+        conn.rollback()
+        return {"message": f"Error: {str(e)}"}
+
+    finally:
+        conn.commit()
+        cursor.close()
+        conn.close()

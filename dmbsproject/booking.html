@@ -1,63 +1,61 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Update Booking - Hotel Paradise</title>
-<link rel="stylesheet" href="style.css">
-<script src="script.js"></script>
+  <title>Update Booking</title>
+  <link rel="stylesheet" href="/static/style.css"> <!-- your big CSS -->
 </head>
 
 <body>
 
 <header>
-<h1>Hotel Paradise</h1>
-<p>Luxury • Comfort • Experience</p>
+  <h1>Hotel Paradise</h1>
 </header>
 
 <nav>
-<a href="index.html">Home</a>
-<a href="rooms.html">Rooms</a>
-<a href="services.html">Services</a>
-<a href="booking.html">Booking</a>
-<a href="cancel.html">Cancel</a>
+  <a href="/">Home</a>
+  <a href="/room">Rooms</a>
+  <a href="/service">Services</a>
+  <a href="/update-booking">Booking</a>
+  <a href="/cancel-booking">Cancel</a>
 </nav>
 
-<section class="update-booking">
+<div class="ub-cancel-section"> <!-- reuse layout classes -->
+  <div class="ub-cancel-box">
 
-<h2>Update Booking</h2>
+    <h2>Update Booking</h2>
 
-<div class="booking-box">
+    <form id="ub-bookingForm">
+      <input type="text" id="ub-bookingId" name="bookingId" placeholder="Enter Booking ID" required>
+      <input type="text" id="ub-gname" name="gname" placeholder="Guest Name" readonly>
 
-<label>Name</label>
-<input type="text" id="searchName">
+      <select id="ub-roomType" name="room_type">
+        <option value="Deluxe">Deluxe</option>
+        <option value="Standard">Standard</option>
+        <option value="Suite">Suite</option>
+      </select>
 
-<label>Booking ID</label>
-<input type="text" id="searchId">
+      <input type="date" id="ub-check_in" name="check_in" required>
+      <input type="date" id="ub-check_out" name="check_out" required>
 
-<button onclick="getBooking()">Get Booking</button>
+      <select id="ub-payment_mode" name="payment_mode">
+        <option value="Cash">Cash</option>
+        <option value="Card">Card</option>
+        <option value="UPI">UPI</option>
+      </select>
 
-<hr>
+      <button type="submit">Update Booking</button>
+    </form>
 
-<label>Select Room</label>
-<select id="room">
-<option>Single Room</option>
-<option>Double Room</option>
-<option>Deluxe Room</option>
-<option>Family Room</option>
-<option>Executive Suite</option>
-<option>Presidential Suite</option>
-</select>
+    <div id="ub-billDetails">
+      <p id="ub-billstats"></p>
+      <pre id="ub-billText"></pre>
+      <p id="ub-mess"></p>
+    </div>
 
-<label>Payment Method</label>
-<select id="payment">
-<option>Cash</option>
-<option>Online Payment</option>
-</select>
-
-<button onclick="updateBooking()">Update Booking</button>
-
+  </div>
 </div>
 
-</section>
+<script src="/static/js/ub-updateBooking.js"></script>
 
 </body>
 </html>

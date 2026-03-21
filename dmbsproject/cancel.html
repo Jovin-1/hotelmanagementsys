@@ -2,8 +2,7 @@
 <html>
 <head>
 <title>Cancel Booking</title>
-<link rel="stylesheet" href="style.css">
-<script src="script.js"></script>
+<link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
@@ -13,22 +12,34 @@
 </header>
 
 <nav>
-<a href="index.html">Home</a>
-<a href="rooms.html">Rooms</a>
-<a href="services.html">Services</a>
-<a href="booking.html">Booking</a>
-<a href="cancel.html">Cancel</a>
+<a href="/">Home</a>
+<a href="/room">Rooms</a>
+<a href="/service">Services</a>
+<a href="/update-booking">Booking</a>
+<a href="/cancel-booking">Cancel</a>
 </nav>
 
-<div class="container">
+<div class="cancel-section">
+
+<div class="cancel-box">
 
 <h2>Cancel Booking</h2>
 
-<p>Click the button below to cancel your booking.</p>
+<input type="text" id="name" placeholder="Enter Name">
+
+<input type="date" id="dob">
+
+<input type="number" id="reservation_id" placeholder="Reservation ID">
 
 <button onclick="cancelBooking()">Cancel Booking</button>
 
+<div id="result"></div>
+
 </div>
+
+</div>
+
+<script src="/static/cancel.js"></script>
 
 </body>
 </html>
