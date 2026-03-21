@@ -479,3 +479,10 @@ white-space: pre-wrap;
 #ub-mess {
 margin: 5px 0;
 }
+
+
+.refund {
+    margin-top: 15px;
+    color: green;
+    font-weight: bold;
+}

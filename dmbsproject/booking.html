@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>Update Booking</title>
-  <link rel="stylesheet" href="/static/style.css"> <!-- your big CSS -->
-</head>
+  <link rel="stylesheet" href="/static/style.css">
 
+</head>
 <body>
 
 <header>
@@ -19,43 +20,178 @@
   <a href="/cancel-booking">Cancel</a>
 </nav>
 
-<div class="ub-cancel-section"> <!-- reuse layout classes -->
+<div class="ub-cancel-section">
   <div class="ub-cancel-box">
 
     <h2>Update Booking</h2>
 
-    <form id="ub-bookingForm">
-      <input type="text" id="ub-bookingId" name="bookingId" placeholder="Enter Booking ID" required>
-      <input type="text" id="ub-gname" name="gname" placeholder="Guest Name" readonly>
+    <!-- Step 1: Get booking -->
+    <form id="ub-fetchBookingForm">
+      <input type="text" id="ub-bookingIdFetch" placeholder="Enter Booking ID" required>
+      <input type="text" id="ub-guestNameFetch" placeholder="Guest Name" required>
+      <input type="date" id="ub-dobFetch" placeholder="DOB" required>
+      <button type="submit">Fetch Booking</button>
+    </form>
 
+    <hr>
+
+    <!-- Message if reservation not found -->
+    <p id="ub-notfound" style="display:none; color:red; font-weight:bold;">Reservation not found</p>
+
+    <!-- Step 2: Update booking (only editable fields) -->
+    <form id="ub-bookingForm" style="display:none;">
+      <label>Room Type:</label>
       <select id="ub-roomType" name="room_type">
-        <option value="Deluxe">Deluxe</option>
-        <option value="Standard">Standard</option>
-        <option value="Suite">Suite</option>
+        <option value="Single Room">Single Room</option>
+        <option value="Double Room">Double Room</option>
+        <option value="Deluxe Room">Deluxe Room</option>
+        <option value="Family Room">Family Room</option>
+        <option value="Executive Suite">Executive Suite</option>
+        <option value="Presidential Suite">Presidential Suite</option>
       </select>
 
+      <label>Check-In:</label>
       <input type="date" id="ub-check_in" name="check_in" required>
+      <label>Check-Out:</label>
       <input type="date" id="ub-check_out" name="check_out" required>
 
+      <label>Payment Mode:</label>
       <select id="ub-payment_mode" name="payment_mode">
         <option value="Cash">Cash</option>
-        <option value="Card">Card</option>
         <option value="UPI">UPI</option>
       </select>
 
       <button type="submit">Update Booking</button>
     </form>
 
-    <div id="ub-billDetails">
-      <p id="ub-billstats"></p>
-      <pre id="ub-billText"></pre>
-      <p id="ub-mess"></p>
-    </div>
-
   </div>
 </div>
 
-<script src="/static/js/ub-updateBooking.js"></script>
+<!-- Bill Popup -->
+<div class="popup-overlay" id="billPopup">
+  <div class="popup">
+    <span class="close-btn" onclick="closeBillPopup()">✖</span>
+    <h2>Bill Details</h2>
+    <div id="billContent">
+      <div class="bill-item"><span>Bill ID:</span> <span id="billId"></span></div>
+<div class="bill-item"><span>Guest ID:</span> <span id="guestId"></span></div>
+<div class="bill-item"><span>Guest Name:</span> <span id="guestName"></span></div>
+<div class="bill-item"><span>Reservation ID:</span> <span id="billResId"></span></div>
+<div class="bill-item"><span>Room No:</span> <span id="billRoomNo"></span></div>
+<div class="bill-item"><span>Floor No:</span> <span id="billFloorNo"></span></div>
+<div class="bill-item"><span>Room Type:</span> <span id="billRoomType"></span></div>
+<div class="bill-item"><span>Check-In:</span> <span id="billCheckIn"></span></div>
+<div class="bill-item"><span>Check-Out:</span> <span id="billCheckOut"></span></div>
+<div class="bill-item"><span>Payment Mode:</span> <span id="billPayment"></span></div>
+<div class="bill-item"><span>Total Bill:</span> ₹<span id="billTotal"></span></div>
+<div class="refund" id="billRefund"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const fetchForm = document.getElementById("ub-fetchBookingForm");
+const updateForm = document.getElementById("ub-bookingForm");
+const notFoundMsg = document.getElementById("ub-notfound");
+
+const billPopup = document.getElementById("billPopup");
+const billResId = document.getElementById("billResId");
+const billRoomType = document.getElementById("billRoomType");
+const billCheckIn = document.getElementById("billCheckIn");
+const billCheckOut = document.getElementById("billCheckOut");
+const billPayment = document.getElementById("billPayment");
+const billTotal = document.getElementById("billTotal");
+const billRefund = document.getElementById("billRefund");
+
+let currentBookingId = null;
+
+// Fetch booking
+fetchForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const bookingId = parseInt(document.getElementById("ub-bookingIdFetch").value);
+  const guestName = document.getElementById("ub-guestNameFetch").value;
+  const dob = document.getElementById("ub-dobFetch").value;
+
+  try {
+    const res = await fetch("/get-booking", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({bookingId, name: guestName, dob})
+    });
+    const data = await res.json();
+
+    if (!data.booking) {
+      updateForm.style.display = "none";
+      notFoundMsg.style.display = "block";
+      return;
+    }
+
+    currentBookingId = data.booking.reservation_id;
+
+    document.getElementById("ub-roomType").value = data.booking.room_type;
+    document.getElementById("ub-check_in").value = data.booking.check_in;
+    document.getElementById("ub-check_out").value = data.booking.check_out;
+    document.getElementById("ub-payment_mode").value = data.booking.payment_mode;
+
+    updateForm.style.display = "block";
+    notFoundMsg.style.display = "none";
+
+  } catch (err) {
+    alert("Error fetching booking");
+    console.error(err);
+  }
+});
+
+// Update booking
+updateForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const payload = {
+    bookingId: currentBookingId,
+    room_type: document.getElementById("ub-roomType").value,
+    check_in: document.getElementById("ub-check_in").value,
+    check_out: document.getElementById("ub-check_out").value,
+    payment_mode: document.getElementById("ub-payment_mode").value
+  };
+
+  try {
+    const res = await fetch("/update-booking", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+
+    if (data.bill) {
+      // Populate popup
+     billId.textContent = data.bill.bill_id;
+guestId.textContent = data.bill.guest_id;
+guestName.textContent = data.bill.gname;
+billResId.textContent = data.bill.reservation_id;
+billRoomNo.textContent = data.bill.room_no;
+billFloorNo.textContent = data.bill.floor_no;
+billRoomType.textContent = data.bill.room_type;
+billCheckIn.textContent = data.bill.check_in;
+billCheckOut.textContent = data.bill.check_out;
+billPayment.textContent = data.bill.payment_mode;
+billTotal.textContent = data.bill.total_bill;
+billRefund.textContent = data.bill.refund || "";
+
+      billPopup.style.display = "flex"; // show popup
+    } else {
+      alert(data.message);
+    }
+
+  } catch (err) {
+    alert("Error updating booking");
+    console.error(err);
+  }
+});
+
+function closeBillPopup() {
+  billPopup.style.display = "none";
+}
+</script>
 
 </body>
 </html>
